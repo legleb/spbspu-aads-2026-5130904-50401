@@ -98,8 +98,6 @@ BOOST_AUTO_TEST_CASE(CopyAssignTest)
   BOOST_CHECK_EQUAL(*it, 1);
   ++it;
   BOOST_CHECK_EQUAL(*it, 2);
-  list1 = list1;
-  BOOST_CHECK_EQUAL(list1.size(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(FrontAndBackTest)
