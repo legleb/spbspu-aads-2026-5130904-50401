@@ -121,7 +121,7 @@ namespace sedov
   {}
 
   template< class T >
-  LIter< T >::LIter(detail::Node< T > * p = nullptr):
+  LIter< T >::LIter(detail::Node< T > * p):
     ptr_(p)
   {}
 
@@ -180,7 +180,7 @@ namespace sedov
   }
 
   template< class T >
-  LCIter< T >::LCIter(const detail::Node< T > * p = nullptr):
+  LCIter< T >::LCIter(const detail::Node< T > * p):
     ptr_(p)
   {}
 
