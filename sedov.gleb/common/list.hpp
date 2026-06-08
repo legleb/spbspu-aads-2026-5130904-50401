@@ -24,6 +24,9 @@ namespace sedov
       Node< T > * prev;
       Node(const T & value);
       Node(T && value);
+
+      template< class... Args >
+      explicit Node(Args&&... args);
     };
   }
 
@@ -93,6 +96,19 @@ namespace sedov
     void pushFront(T && v);
     void pushBack(const T & v);
     void pushBack(T && v);
+
+    template< class... Args >
+    LIter< T > emplaceFront(Args&&... args);
+
+    template< class... Args >
+    LIter< T > emplaceBack(Args&&... args);
+
+    template< class... Args >
+    LIter< T > emplace(LIter< T > p, Args&&... args);
+
+    template< class... Args >
+    LIter< T > emplaceAfter(LIter< T > p, Args&&... args);
+
     LIter< T > insert(LIter< T > p, const T & v);
     LIter< T > insert(LIter< T > p, T && v);
 
@@ -138,6 +154,14 @@ namespace sedov
   template< class T >
   detail::Node< T >::Node(T && value):
     val(std::forward< T >(value)),
+    next(nullptr),
+    prev(nullptr)
+  {}
+
+  template< class T >
+  template< class... Args >
+  detail::Node< T >::Node(Args&&... args) :
+    val(std::forward< Args >(args)...),
     next(nullptr),
     prev(nullptr)
   {}
@@ -418,19 +442,56 @@ namespace sedov
   }
 
   template< class T >
-  LIter< T > List< T >::insert(LIter< T > p, const T & v)
+  template< class... Args >
+  LIter< T > List< T >::emplaceFront(Args&&... args)
+  {
+    detail::Node< T > * newNode = new detail::Node< T >(std::forward< Args >(args)...);
+    newNode->next = head_;
+    if (head_)
+    {
+      head_->prev = newNode;
+    }
+    else
+    {
+      tail_ = newNode;
+    }
+    head_ = newNode;
+    ++size_;
+    return LIter< T >(newNode);
+  }
+
+  template< class T >
+  template< class... Args >
+  LIter< T > List< T >::emplaceBack(Args&&... args)
+  {
+    detail::Node< T > * newNode = new detail::Node< T >(std::forward< Args >(args)...);
+    newNode->prev = tail_;
+    if (tail_)
+    {
+      tail_->next = newNode;
+    }
+    else
+    {
+      head_ = newNode;
+    }
+    tail_ = newNode;
+    ++size_;
+    return LIter< T >(newNode);
+  }
+
+  template< class T >
+  template< class... Args >
+  LIter< T > List< T >::emplace(LIter< T > p, Args&&... args)
   {
     if (!p.ptr_)
     {
-      pushBack(v);
-      return LIter< T >(tail_);
+      return emplaceBack(std::forward< Args >(args)...);
     }
     if (p.ptr_ == head_)
     {
-      pushFront(v);
-      return LIter< T >(head_);
+      return emplaceFront(std::forward< Args >(args)...);
     }
-    detail::Node< T > * newNode = new detail::Node< T >(v);
+    detail::Node< T > * newNode = new detail::Node< T >(std::forward< Args >(args)...);
     detail::Node< T > * next = p.ptr_;
     detail::Node< T > * prev = next->prev;
     newNode->prev = prev;
@@ -442,27 +503,41 @@ namespace sedov
   }
 
   template< class T >
-  LIter< T > List< T >::insert(LIter< T > p, T && v)
+  template< class... Args >
+  LIter< T > List< T >::emplaceAfter(LIter< T > p, Args&&... args)
   {
     if (!p.ptr_)
     {
-      pushBack(std::forward< T >(v));
-      return LIter< T >(tail_);
+      return emplaceBack(std::forward< Args >(args)...);
     }
-    if (p.ptr_ == head_)
-    {
-      pushFront(std::forward< T >(v));
-      return LIter< T >(head_);
-    }
-    detail::Node< T >* newNode = new detail::Node< T >(std::forward< T >(v));
-    detail::Node< T >* next = p.ptr_;
-    detail::Node< T >* prev = next->prev;
-    newNode->prev = prev;
+    detail::Node< T > * newNode = new detail::Node< T >(std::forward< Args >(args)...);
+    detail::Node< T > * current = p.ptr_;
+    detail::Node< T > * next = current->next;
+    newNode->prev = current;
     newNode->next = next;
-    prev->next = newNode;
-    next->prev = newNode;
+    current->next = newNode;
+    if (next)
+    {
+      next->prev = newNode;
+    }
+    else
+    {
+      tail_ = newNode;
+    }
     ++size_;
     return LIter< T >(newNode);
+  }
+
+  template< class T >
+  LIter< T > List< T >::insert(LIter< T > p, const T & v)
+  {
+    return emplace(p, v);
+  }
+
+  template< class T >
+  LIter< T > List< T >::insert(LIter< T > p, T && v)
+  {
+    return emplace(p, std::forward< T >(v));
   }
 
   template< class T >
